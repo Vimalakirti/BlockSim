@@ -1,5 +1,5 @@
 class Block(object):
-    
+
     """ Defines the base Block model.
 
     :param int depth: the index of the block in the local blockchain ledger (0 for genesis block)
@@ -11,14 +11,16 @@ class Block(object):
     :param int size: the block size in MB
     """
 
-    def __init__(self,
-	 depth=0,
-	 id=0,
-	 previous=-1,
-	 timestamp=0,
-	 miner=None,
-	 transactions=[],
-	 size=1.0):
+    def __init__(
+        self,
+        depth=0,
+        id=0,
+        previous=-1,
+        timestamp=0,
+        miner=None,
+        transactions=[],
+        size=1.0
+    ):
 
         self.depth = depth
         self.id = id

@@ -4,6 +4,7 @@ from Models.Bitcoin.Node import Node
 from Models.Consensus import Consensus as BaseConsensus
 import random
 
+
 class Consensus(BaseConsensus):
 
     """
@@ -16,32 +17,31 @@ class Consensus(BaseConsensus):
         hashPower = miner.hashPower/TOTAL_HASHPOWER
         return random.expovariate(hashPower * 1/p.Binterval)
 
-
     """
 	This method apply the longest-chain approach to resolve the forks that occur when nodes have multiple differeing copies of the blockchain ledger
     """
     def fork_resolution():
-        BaseConsensus.global_chain = [] # reset the global chain before filling it
+        BaseConsensus.global_chain = []  # reset the global chain before filling it
 
-        a=[]
+        a = []
         for i in p.NODES:
-            a+=[i.blockchain_length()]
+            a += [i.blockchain_length()]
         x = max(a)
 
-        b=[]
-        z=0
+        b = []
+        z = 0
         for i in p.NODES:
             if i.blockchain_length() == x:
-                b+=[i.id]
-                z=i.id
+                b += [i.id]
+                z = i.id
 
         if len(b) > 1:
-            c=[]
+            c = []
             for i in p.NODES:
                 if i.blockchain_length() == x:
-                    c+=[i.last_block().miner]
+                    c += [i.last_block().miner]
             z = np.bincount(c)
-            z= np.argmax(z)
+            z = np.argmax(z)
 
         for i in p.NODES:
             if i.blockchain_length() == x and i.last_block().miner == z:
