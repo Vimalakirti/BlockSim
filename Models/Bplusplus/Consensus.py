@@ -30,6 +30,11 @@ class Consensus(BaseConsensus):
             if not block.is_finished():
                 break
 
+            # Add all branches' transactions into vblock
             for branch in block.branches:
                 block.transactions += branch.transactions
+
+            # Take mean of branches' timestamp as vblock's timestamp
+            block.timestamp = np.mean([branch.timestamp for branch in block.branches])
+
             BaseConsensus.global_chain.append(block)
