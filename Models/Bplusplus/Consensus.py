@@ -1,6 +1,5 @@
 import numpy as np
 from InputsConfig import InputsConfig as p
-from Models.Bitcoin.Node import Node
 from Models.Consensus import Consensus as BaseConsensus
 import random
 
@@ -15,7 +14,8 @@ class Consensus(BaseConsensus):
         ##### Start solving a fresh PoW on top of last block appended #####
         TOTAL_HASHPOWER = sum([miner.hashPower for miner in p.NODES])
         hashPower = miner.hashPower/TOTAL_HASHPOWER
-        return random.expovariate(hashPower * 1/p.Binterval)
+        security_level_factor = 2**miner.next_unfinished_virtual_block().security_level()
+        return random.expovariate(hashPower / (p.Binterval * security_level_factor))
 
     """
 	This method apply the longest-chain approach to resolve the forks that occur when nodes have multiple differeing copies of the blockchain ledger
@@ -23,28 +23,13 @@ class Consensus(BaseConsensus):
     def fork_resolution():
         BaseConsensus.global_chain = []  # reset the global chain before filling it
 
-        a = []
-        for i in p.NODES:
-            a += [i.blockchain_length()]
-        x = max(a)
-
-        b = []
-        z = 0
-        for i in p.NODES:
-            if i.blockchain_length() == x:
-                b += [i.id]
-                z = i.id
-
-        if len(b) > 1:
-            c = []
-            for i in p.NODES:
-                if i.blockchain_length() == x:
-                    c += [i.last_block().miner]
-            z = np.bincount(c)
-            z = np.argmax(z)
-
-        for i in p.NODES:
-            if i.blockchain_length() == x and i.last_block().miner == z:
-                for bc in range(len(i.blockchain)):
-                    BaseConsensus.global_chain.append(i.blockchain[bc])
+        depths = [node.last_finished_virtual_block().depth for node in p.NODES]
+        longest_chain_node_idx = depths.index(max(depths))
+        
+        for block in p.NODES[longest_chain_node_idx].blockchain:
+            if not block.is_finished():
                 break
+
+            for branch in block.branches:
+                block.transactions += branch.transactions
+            BaseConsensus.global_chain.append(block)

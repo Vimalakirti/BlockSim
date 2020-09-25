@@ -5,6 +5,8 @@ from Event import Event, Queue
 
 if p.model == 2:
     from Models.Ethereum.Block import Block
+elif p.model == 3:
+    from Models.Bplusplus.Block import Block
 else:
     from Models.Block import Block
 
@@ -18,10 +20,15 @@ class Scheduler:
             # prepare attributes for the event
             block = Block()
             block.miner = miner.id
-            block.depth = len(miner.blockchain)
             block.id = random.randrange(100000000000)
-            block.previous = miner.last_block().id
             block.timestamp = eventTime
+            if p.model == 3:
+                virtual_block = miner.next_unfinished_virtual_block()
+                block.depth = virtual_block.depth
+                block.branch_id = virtual_block.next_branch_id()
+            else:
+                block.depth = len(miner.blockchain)
+                block.previous = miner.last_block().id
 
             event = Event(eventType, block.miner, eventTime,
                           block)  # create the event

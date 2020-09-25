@@ -77,7 +77,7 @@ class Statistics:
 
     ########################################################### prepare the global chain  ###########################################################################################
     def global_chain():
-        if p.model == 0 or p.model == 1:
+        if p.model == 0 or p.model == 1 or p.model == 3:
             for i in c.global_chain:
                 block = [i.depth, i.id, i.previous, i.timestamp,
                          i.miner, len(i.transactions), i.size]

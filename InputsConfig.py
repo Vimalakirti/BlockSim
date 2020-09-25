@@ -5,6 +5,7 @@ class InputsConfig:
     0 : The base model
     1 : Bitcoin model
     2 : Ethereum model
+    3 : B++ model
     """
     model = 2
 
@@ -105,3 +106,33 @@ class InputsConfig:
         ''' Simulation Parameters '''
         simTime = 500  # the simulation length (in seconds)
         Runs = 2  # Number of simulation runs
+
+    ''' Input configurations for B++ model '''
+    if model == 3:
+        ''' Block Parameters '''
+        Binterval = 600  # Average time (in seconds)for creating a block in the blockchain
+        Bsize = 1.0  # The block size in MB
+        Bdelay = 0.42  # average block propogation delay in seconds, #Ref: https://bitslog.wordpress.com/2016/04/28/uncle-mining-an-ethereum-consensus-protocol-flaw/
+        Breward = 12.5  # Reward for mining a block
+        Bdmin = -2
+
+        ''' Transaction Parameters '''
+        hasTrans = True  # True/False to enable/disable transactions in the simulator
+        Ttechnique = "Light"  # Full/Light to specify the way of modelling transactions
+        Tn = 10  # The rate of the number of transactions to be created per second
+        # The average transaction propagation delay in seconds (Only if Full technique is used)
+        Tdelay = 5.1
+        Tfee = 0.000062  # The average transaction fee
+        Tsize = 0.000546  # The average transaction size  in MB
+
+        ''' Node Parameters '''
+        Nn = 3  # the total number of nodes in the network
+        NODES = []
+        from Models.Bplusplus.Node import Node
+        # here as an example we define three nodes by assigning a unique id for each one + % of hash (computing) power
+        NODES = [Node(id=0, hashPower=50), Node(
+            id=1, hashPower=20), Node(id=2, hashPower=30)]
+
+        ''' Simulation Parameters '''
+        simTime = 10000  # the simulation length (in seconds)
+        Runs = 2 # Number of simulation runs
