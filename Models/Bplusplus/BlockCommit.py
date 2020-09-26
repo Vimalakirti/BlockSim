@@ -84,3 +84,4 @@ class BlockCommit(BaseBlockCommit):
                 # draw block propagation delay from a distribution !! or you can assign 0 to ignore block propagation delay
                 blockDelay = Network.block_prop_delay()
                 Scheduler.receive_block_event(recipient, block, blockDelay)
+

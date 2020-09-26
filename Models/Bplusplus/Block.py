@@ -72,3 +72,4 @@ class Block(BaseBlock):
 
         super().__init__(depth, id, previous, timestamp, miner, transactions, size)
         self.branch_id = branch_id
+
