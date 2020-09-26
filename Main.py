@@ -1,7 +1,15 @@
+import os
 from InputsConfig import InputsConfig as p
 from Event import Event, Queue
 from Scheduler import Scheduler
 from Statistics import Statistics
+
+if p.model==3:
+	from Models.Bplusplus.BlockCommit import BlockCommit
+	from Models.Bplusplus.Consensus import Consensus
+	from Models.Transaction import LightTransaction as LT, FullTransaction as FT
+	from Models.Bplusplus.Node import Node
+	from Models.Incentives import Incentives
 
 if p.model==2:
 	from Models.Ethereum.BlockCommit import BlockCommit
@@ -27,6 +35,7 @@ elif p.model==0:
 ########################################################## Start Simulation ##############################################################
 def main():
     for i in range (p.Runs):
+        print('begin run #%d' % (i+1))
         clock =0 # set clock to 0 at the start of the simulation
         if p.hasTrans:
             if p.Ttechnique == "Light": LT.create_transactions() # generate pending transactions
@@ -48,7 +57,8 @@ def main():
 		########## reset all global variable before the next run #############
         Statistics.reset() # reset all variables used to calculate the results
         Node.resetState() # reset all the states (blockchains) for all nodes in the network
-    fname= "(Allverify)1day_{0}M_{1}K.xlsx".format(p.Bsize/1000000, p.Tn/1000)
+    fname = os.getenv('OUTPUT', "(Allverify)1day_{0}M_{1}K".format(
+    	p.Bsize/1000000, p.Tn/1000))+".xlsx"
     Statistics.print_to_excel(fname) # print all the simulation results in an excel file
     Statistics.reset2() # reset profit results
 

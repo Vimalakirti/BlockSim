@@ -1,7 +1,7 @@
 import random
 from InputsConfig import InputsConfig as p
 import numpy as np
-from Models.Network import Network
+import Models.Network
 import operator
 
 
@@ -64,12 +64,14 @@ class LightTransaction():
 
 
         random.shuffle(pool)
+
+
     ##### Select and execute a number of transactions to be added in the next block #####
-    def execute_transactions(miner):
+    def execute_transactions():
         transactions= [] # prepare a list of transactions to be included in the block
         size = 0 # calculate the total block gaslimit
         count=0
-        blocksize = p.Bsize * miner.get_block_num()
+        blocksize = p.Bsize
         pool= LightTransaction.pending_transactions
 
         pool = sorted(pool, key=lambda x: x.fee, reverse=True) # sort pending transactions in the pool based on the gasPrice value
@@ -83,7 +85,6 @@ class LightTransaction():
 
         return transactions, size
 
-# TODO: FullTransaction...
 class FullTransaction():
 
     def create_transactions():
@@ -115,11 +116,13 @@ class FullTransaction():
                 t.timestamp[1] = t.timestamp[1] + Network.tx_prop_delay() # transaction propogation delay in seconds
                 i.transactionsPool.append(t)
 
+
+
     def execute_transactions(miner,currentTime):
         transactions= [] # prepare a list of transactions to be included in the block
         size = 0 # calculate the total block gaslimit
         count=0
-        blocksize = p.Bsize * node.get_block_num()
+        blocksize = p.Bsize
         miner.transactionsPool.sort(key=operator.attrgetter('fee'), reverse=True)
         pool= miner.transactionsPool
 
