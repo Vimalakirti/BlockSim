@@ -54,12 +54,13 @@ class BlockCommit(BaseBlockCommit):
         receiver.grow_blockchain(new_branch.depth)
         receiver_virtual_block = receiver.blockchain[new_branch.depth]
 
-        #### case 1: the id of received branch is never seen before ####
+        #### the id of received branch is never seen before ####
         if receiver_virtual_block.branches[new_branch.branch_id] == None:
             receiver_virtual_block.set_branch(new_branch)
 
-            #### case 1.1: the received branch is also deeper than current deepest finished virtual block ####
-            if new_branch.depth > receiver.last_finished_virtual_block().depth:
+            #### the branch received is the one receiver try to mine ####
+            if receiver.mining_branch.depth == new_branch.depth and receiver.mining_branch.branch_id == new_branch.branch_id:
+                #### abort duplicate branch mining and begin to mine next branch ####
                 BlockCommit.generate_next_block(receiver, event.time)
 
             if p.hasTrans and p.Ttechnique == "Full":

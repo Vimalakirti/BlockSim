@@ -26,6 +26,7 @@ class Scheduler:
                 virtual_block = miner.next_unfinished_virtual_block()
                 block.depth = virtual_block.depth
                 block.branch_id = virtual_block.next_branch_id()
+                miner.mining_branch = block
             else:
                 block.depth = len(miner.blockchain)
                 block.previous = miner.last_block().id
