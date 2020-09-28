@@ -33,7 +33,12 @@ class Statistics:
         trans = 0
 
         Statistics.mainBlocks = len(c.global_chain)-1
-        Statistics.staleBlocks = Statistics.totalBlocks - Statistics.mainBlocks
+        if p.model == 3:
+            full_cycle_block_count = (Statistics.mainBlocks // (1-p.Bdmin)) * (2**(1-p.Bdmin)-1)
+            leftover_block_count = sum([2**(abs(p.Bdmin) - i) for i in range(Statistics.mainBlocks % (1-p.Bdmin))])
+            Statistics.staleBlocks = Statistics.totalBlocks - full_cycle_block_count - leftover_block_count
+        else:
+            Statistics.staleBlocks = Statistics.totalBlocks - Statistics.mainBlocks
         for b in c.global_chain:
             if p.model == 2:
                 Statistics.uncleBlocks += len(b.uncles)
@@ -62,8 +67,12 @@ class Statistics:
             else:
                 Statistics.profits[i][1] = m.hashPower
             Statistics.profits[i][2] = m.blocks
-            Statistics.profits[i][3] = round(
-                m.blocks/Statistics.mainBlocks * 100, 2)
+            if p.model == 3:
+                Statistics.profits[i][3] = round(
+                    m.blocks/Statistics.totalBlocks * 100, 2)
+            else:
+                Statistics.profits[i][3] = round(
+                    m.blocks/Statistics.mainBlocks * 100, 2)
             if p.model == 2:
                 Statistics.profits[i][4] = m.uncles
                 Statistics.profits[i][5] = round(
