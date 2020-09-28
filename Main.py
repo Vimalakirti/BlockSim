@@ -35,7 +35,6 @@ elif p.model==0:
 ########################################################## Start Simulation ##############################################################
 def main():
     for i in range (p.Runs):
-        print('begin run #%d' % (i+1))
         clock =0 # set clock to 0 at the start of the simulation
         if p.hasTrans:
             if p.Ttechnique == "Light": LT.create_transactions() # generate pending transactions
