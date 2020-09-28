@@ -1,11 +1,11 @@
 from Scheduler import Scheduler
 from InputsConfig import InputsConfig as p
-from Models.Bplusplus.Node import Node
 from Statistics import Statistics
-from Models.Transaction import LightTransaction as LT, FullTransaction as FT
 from Models.Network import Network
-from Models.Bplusplus.Consensus import Consensus as c
 from Models.BlockCommit import BlockCommit as BaseBlockCommit
+from Models.Bplusplus.Node import Node
+from Models.Bplusplus.Transaction import LightTransaction as LT, FullTransaction as FT
+from Models.Bplusplus.Consensus import Consensus as c
 
 
 class BlockCommit(BaseBlockCommit):
