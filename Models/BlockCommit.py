@@ -46,10 +46,5 @@ class BlockCommit:
 
     # Update local blockchain, if necessary, upon receiving a new valid block. This method is only triggered if Full technique is used
     def update_transactionsPool(node,block):
-        j=0
-        while j < len(block.transactions):
-            for t in node.transactionsPool:
-                if  block.transactions[j].id == t.id:
-                    del t
-                    break
-            j+=1
+        block_tx_set = {tx.id: True for tx in block.transactions}
+        node.transactionsPool = [tx for tx in node.transactionsPool if tx.id not in block_tx_set]

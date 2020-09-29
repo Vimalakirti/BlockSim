@@ -7,9 +7,9 @@ from Statistics import Statistics
 if p.model==3:
 	from Models.Bplusplus.BlockCommit import BlockCommit
 	from Models.Bplusplus.Consensus import Consensus
-	from Models.Transaction import LightTransaction as LT, FullTransaction as FT
+	from Models.Bplusplus.Transaction import LightTransaction as LT, FullTransaction as FT
 	from Models.Bplusplus.Node import Node
-	from Models.Incentives import Incentives
+	from Models.Bplusplus.Incentives import Incentives
 
 if p.model==2:
 	from Models.Ethereum.BlockCommit import BlockCommit
@@ -35,7 +35,6 @@ elif p.model==0:
 ########################################################## Start Simulation ##############################################################
 def main():
     for i in range (p.Runs):
-        print('begin run #%d' % (i+1))
         clock =0 # set clock to 0 at the start of the simulation
         if p.hasTrans:
             if p.Ttechnique == "Light": LT.create_transactions() # generate pending transactions

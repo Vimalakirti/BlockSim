@@ -1,9 +1,9 @@
-from Models.Ethereum.Distribution.DistFit import DistFit
 import random
-from InputsConfig import InputsConfig as p
 import numpy as np
-import Models.Network
 import operator
+from InputsConfig import InputsConfig as p
+from Statistics import Statistics
+from Models.Network import Network
 from Models.Ethereum.Distribution.DistFit import DistFit
 
 class Transaction(object):
@@ -100,13 +100,11 @@ class LightTransaction():
         return transactions, limit
 
 class FullTransaction():
-    x=0 # counter to only fit distributions once during the simulation
 
     def create_transactions():
         Psize= int(p.Tn * p.simTime)
 
-        if LightTransaction.x<1:
-            DistFit.fit() # fit distributions
+        DistFit.fit() # fit distributions
         gasLimit,usedGas,gasPrice,_ = DistFit.sample_transactions(Psize) # sampling gas based attributes for transactions from specific distribution
 
         for i in range(Psize):
@@ -128,30 +126,33 @@ class FullTransaction():
             sender.transactionsPool.append(tx)
             FullTransaction.transaction_prop(tx)
 
+        # sort transactions by fee asc
+        for node in p.NODES:
+            node.transactionsPool.sort(
+                key=operator.attrgetter('gasPrice'), reverse=True)
+
     # Transaction propogation & preparing pending lists for miners
     def transaction_prop(tx):
         # Fill each pending list. This is for transaction propogation
-        for i in p.NODES:
-            if tx.sender != i.id:
-                t= tx
-                t.timestamp[1] = t.timestamp[1] + Network.tx_prop_delay() # transaction propogation delay in seconds
-                i.transactionsPool.append(t)
-
-
+        for node in p.NODES:
+            if tx.sender != node.id:
+                # transaction propogation delay in seconds
+                tx.timestamp[1] = tx.timestamp[1] + Network.tx_prop_delay()
+                node.transactionsPool.append(tx)
 
     def execute_transactions(miner,currentTime):
         transactions= [] # prepare a list of transactions to be included in the block
-        limit = 0 # calculate the total block gaslimit
-        count=0
-        blocklimit = p.Bsize
-        miner.transactionsPool.sort(key=operator.attrgetter('gasPrice'), reverse=True)
-        pool= miner.transactionsPool
+        used_gas = 0 # calculate the total block gaslimit
 
-        while count < len(pool):
-                if  (blocklimit >= pool[count].gasLimit and pool[count].timestamp[1] <= currentTime):
-                    blocklimit -= pool[count].usedGas
-                    transactions += [pool[count]]
-                    limit += pool[count].usedGas
-                count+=1
+        for idx, tx in enumerate(miner.transactionsPool):
+            # move out timeout tx from transactionsPool
+            if currentTime > tx.timestamp[0] + p.Ttimeout:
+                Statistics.tx_timeout_count += 1
+                del miner.transactionsPool[idx]
+                continue
 
-        return transactions, limit
+            if (p.Blimit - used_gas >= tx.gasLimit and currentTime >= tx.timestamp[1]):
+                transactions.append(tx)
+                used_gas += tx.usedGas
+
+        return transactions, used_gas

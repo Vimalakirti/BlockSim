@@ -45,6 +45,8 @@ class InputsConfig:
     Tdelay = float(os.getenv('TRANSACTION_PROPAGATION_DELAY', 5.1))
     # average transaction fee
     Tfee = float(os.getenv('TRANSACTION_FEE', 0.000062))
+    # time to treat transaction as timeout after it is created but still not mined
+    Ttimeout = float(os.getenv('TRANSACTION_TIMEOUT', 6000))
 
     ''' Node Parameters '''
     # total count of nodes in the network
@@ -56,13 +58,10 @@ class InputsConfig:
     if len(node_hash_powers) != Nn:
         sys.exit('length of node hash powers must be equal to node count %d, but got %d' % (
             Nn, len(node_hash_powers)))
-    if sum(node_hash_powers) != 100:
-        sys.exit('sum of node hash powers must be 100, but got %f' %
-                 sum(node_hash_powers))
 
     ''' Simulation Parameters '''
     # simulation length (in seconds)
-    simTime = int(os.getenv('SIMULATION_TIME', 1000))
+    simTime = int(os.getenv('SIMULATION_TIME', 100000))
     # count of simulation runs
     Runs = int(os.getenv('SIMULATION_RUN', 3))
 
@@ -78,7 +77,7 @@ class InputsConfig:
     ''' Ethereum '''
     if model == 2:
         # The block gas limit
-        Blimit = int(os.getenv('BLOCK_GAS_LIMIT', 8000000))
+        Blimit = int(os.getenv('BLOCK_GAS_LIMIT', 10000000))
         # whether to enable uncle in the simulator
         hasUncles = bool(os.getenv('UNCLE_ENABLED', True))
         # max count of uncle blocks allowed per block
@@ -96,6 +95,12 @@ class InputsConfig:
     ''' B++ '''
     if model == 3:
         Bdmin = int(os.getenv('BLOCK_D_MIN', -3))
+        if Ttechnique == 'Full':
+            TProbability = [float(tx_probability)
+                            for tx_probability in os.getenv('TRANSACTION_PROBABILITY', '5,15,30,50').split(',')]
+            if len(TProbability) != 1-Bdmin:
+                sys.exit('length of transaction probability must be equal to block 1-d_min %d, but got %d' % (
+                    1-Bdmin, len(TProbability)))
 
         NODES = [Node(id=id, hashPower=hash_power)
                  for id, hash_power in enumerate(node_hash_powers)]

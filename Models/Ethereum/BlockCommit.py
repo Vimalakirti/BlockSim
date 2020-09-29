@@ -26,11 +26,12 @@ class BlockCommit(BaseBlockCommit):
         if blockPrev == miner.last_block().id:
             Statistics.totalBlocks += 1 # count # of total blocks created!
             if p.hasTrans:
-                if p.Ttechnique == "Light": blockTrans,blockSize = LT.execute_transactions()
-                elif p.Ttechnique == "Full": blockTrans,blockSize = FT.execute_transactions(miner,eventTime)
-
-                event.block.transactions = blockTrans
-                event.block.usedgas= blockSize
+                if p.Ttechnique == "Light":
+                    event.block.transactions, event.block.usedgas = LT.execute_transactions()
+                elif p.Ttechnique == "Full":
+                    event.block.transactions, event.block.usedgas = FT.execute_transactions(
+                        miner, eventTime)
+                    BlockCommit.update_transactionsPool(miner, event.block)
 
             if p.hasUncles:
                 BlockCommit.update_unclechain(miner)
@@ -106,11 +107,11 @@ class BlockCommit(BaseBlockCommit):
                     node.unclechain.append(node.blockchain[i]) # move block to unclechain
                     newBlock = miner.blockchain[i]
                     node.blockchain[i]= newBlock
-                    if p.hasTrans and p.Ttechnique == "Full": Node.update_transactionsPool(node,newBlock)
+                    if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node,newBlock)
             else:
                 newBlock = miner.blockchain[i]
                 node.blockchain.append(newBlock)
-                if p.hasTrans and p.Ttechnique == "Full": Node.update_transactionsPool(node,newBlock)
+                if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node,newBlock)
             i+=1
 
     # Upon receiving a block, update local unclechain to remove all uncles included in the received block
