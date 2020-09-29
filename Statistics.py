@@ -1,7 +1,8 @@
+import pandas as pd
+import numpy as np
 from InputsConfig import InputsConfig as p
 from Models.Consensus import Consensus as c
 from Models.Incentives import Incentives
-import pandas as pd
 
 
 class Statistics:
@@ -15,7 +16,10 @@ class Statistics:
     uncleRate = 0
     staleRate = 0
     blockData = []
+    tx_timeout_count = [0] * (1-p.Bdmin)
     blocksResults = []
+    tx_latency_mean_results = []
+    tx_timeout_count_results = []
     # rows number of miners * number of runs, columns =7
     profits = [[0 for x in range(7)] for y in range(p.Runs * len(p.NODES))]
     index = 0
@@ -27,6 +31,9 @@ class Statistics:
         Statistics.blocks_results()
         # calculate and distribute the revenue or reward for miners
         Statistics.profit_results()
+        # calculate tx latency
+        if p.model == 3:
+            Statistics.transaction_latency_result()
 
     ########################################################### Calculate block statistics Results ###########################################################################################
     def blocks_results():
@@ -34,9 +41,12 @@ class Statistics:
 
         Statistics.mainBlocks = len(c.global_chain)-1
         if p.model == 3:
-            full_cycle_block_count = (Statistics.mainBlocks // (1-p.Bdmin)) * (2**(1-p.Bdmin)-1)
-            leftover_block_count = sum([2**(abs(p.Bdmin) - i) for i in range(Statistics.mainBlocks % (1-p.Bdmin))])
-            Statistics.staleBlocks = Statistics.totalBlocks - full_cycle_block_count - leftover_block_count
+            full_cycle_block_count = \
+                (Statistics.mainBlocks // (1-p.Bdmin)) * (2**(1-p.Bdmin)-1)
+            leftover_block_count = sum(
+                [2**(abs(p.Bdmin) - i) for i in range(Statistics.mainBlocks % (1-p.Bdmin))])
+            Statistics.staleBlocks = Statistics.totalBlocks - \
+                full_cycle_block_count - leftover_block_count
         else:
             Statistics.staleBlocks = Statistics.totalBlocks - Statistics.mainBlocks
         for b in c.global_chain:
@@ -55,6 +65,28 @@ class Statistics:
         Statistics.blockData = [Statistics.totalBlocks, Statistics.mainBlocks,  Statistics.uncleBlocks,
                                 Statistics.uncleRate, Statistics.staleBlocks, Statistics.staleRate, trans]
         Statistics.blocksResults += [Statistics.blockData]
+
+    def transaction_latency_result():
+        tx_latencies = [[] for _ in range(1-p.Bdmin)]
+
+        # calculate global chain tx latency and timout count of each dmin
+        for block in c.global_chain:
+            for branch in block.branches:
+                for tx in branch.transactions:
+                    idx = -tx.security_level
+                    tx_latencies[idx].append(
+                        branch.timestamp - tx.timestamp[0])
+
+        last_block_timestamp = max([branch.timestamp for branch in c.global_chain[-1].branches])
+        # calculate tx not mined timout count of each dmin
+        for node in p.NODES:
+            for tx in node.transactionsPool:
+                if last_block_timestamp > tx.timestamp[0] + p.Ttimeout:
+                    Statistics.tx_timeout_count[-tx.security_level] += 1
+
+        Statistics.tx_latency_mean_results.append(
+            [np.mean(l) for l in tx_latencies])
+        Statistics.tx_timeout_count_results.append(Statistics.tx_timeout_count)
 
     ########################################################### Calculate and distibute rewards among the miners ###########################################################################################
     def profit_results():
@@ -121,11 +153,20 @@ class Statistics:
             df4.columns = ['Block Depth', 'Block ID', 'Previous Block',
                            'Block Timestamp', 'Miner ID', '# transactions', 'Block Size']
 
+        if p.model == 3:
+            df5 = pd.DataFrame(Statistics.tx_latency_mean_results)
+            df6 = pd.DataFrame(Statistics.tx_timeout_count_results)
+            df5.columns = df6.columns = ['%d' % -i for i in range(1-p.Bdmin)]
+
         writer = pd.ExcelWriter(fname, engine='xlsxwriter')
         df1.to_excel(writer, sheet_name='InputConfig')
         df2.to_excel(writer, sheet_name='SimOutput')
         df3.to_excel(writer, sheet_name='Profit')
         df4.to_excel(writer, sheet_name='Chain')
+
+        if p.model == 3:
+            df5.to_excel(writer, sheet_name='Tx Latency Mean')
+            df6.to_excel(writer, sheet_name='Tx Timeout Count')
 
         writer.save()
 
@@ -139,6 +180,7 @@ class Statistics:
         Statistics.uncleRate = 0
         Statistics.staleRate = 0
         Statistics.blockData = []
+        Statistics.tx_timeout_count = [0] * (1-p.Bdmin)
 
     def reset2():
         Statistics.blocksResults = []

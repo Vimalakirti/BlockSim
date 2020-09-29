@@ -73,3 +73,7 @@ class Block(BaseBlock):
         super().__init__(depth, id, previous, timestamp, miner, transactions, size)
         self.branch_id = branch_id
 
+    def security_level(self):
+        from InputsConfig import InputsConfig as p
+        state_count = 1-p.Bdmin
+        return -((state_count - self.depth % state_count) % state_count)

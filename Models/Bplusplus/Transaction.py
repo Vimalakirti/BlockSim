@@ -1,8 +1,10 @@
 import random
-from InputsConfig import InputsConfig as p
+import itertools
 import numpy as np
-import Models.Network
 import operator
+from InputsConfig import InputsConfig as p
+from Statistics import Statistics
+from Models.Network import Network
 
 
 class Transaction(object):
@@ -28,7 +30,8 @@ class Transaction(object):
                  to=0,
                  value=0,
                  size=0.000546,
-                 fee=0):
+                 fee=0,
+                 security_level=0):
 
         self.id = id
         self.timestamp = timestamp
@@ -37,6 +40,7 @@ class Transaction(object):
         self.value = value
         self.size = size
         self.fee = fee
+        self.security_level = security_level
 
 
 class LightTransaction():
@@ -88,49 +92,59 @@ class LightTransaction():
 class FullTransaction():
 
     def create_transactions():
-        Psize = int(p.Tn * p.simTime)
+        total_tx_count = int(p.Tn * p.simTime)
+        security_level_rand_pool = list(itertools.chain(*[
+            [-security_level for _ in range(int(float(weight)*100))] for security_level, weight in enumerate(p.TProbability)
+        ]))
 
-        for i in range(Psize):
-            # assign values for transactions' attributes. You can ignore some attributes if not of an interest, and the default values will then be used
-            tx = Transaction()
-
-            tx.id = random.randrange(100000000000)
-            creation_time = random.randint(0, p.simTime-1)
-            receive_time = creation_time
-            tx.timestamp = [creation_time, receive_time]
+        for i in range(total_tx_count):
             sender = random.choice(p.NODES)
-            tx.sender = sender.id
-            tx.to = random.choice(p.NODES).id
-            tx.size = random.expovariate(1/p.Tsize)
-            tx.fee = random.expovariate(1/p.Tfee)
+            creation_time = receive_time = random.randint(0, p.simTime-1)
+            security_level = random.choice(security_level_rand_pool)
+            fee = random.expovariate(1/(p.Tfee * (2**security_level)))
+
+            tx = Transaction(
+                id=random.randrange(100000000000),
+                timestamp=[creation_time, receive_time],
+                sender=sender.id,
+                to=random.choice(p.NODES).id,
+                size=random.expovariate(1/p.Tsize),
+                security_level=security_level,
+                fee=fee,
+            )
 
             sender.transactionsPool.append(tx)
             FullTransaction.transaction_prop(tx)
 
+        # sort transactions by fee asc
+        for node in p.NODES:
+            node.transactionsPool.sort(
+                key=operator.attrgetter('fee'), reverse=True)
+
     # Transaction propogation & preparing pending lists for miners
     def transaction_prop(tx):
         # Fill each pending list. This is for transaction propogation
-        for i in p.NODES:
-            if tx.sender != i.id:
-                t = tx
+        for node in p.NODES:
+            if tx.sender != node.id:
                 # transaction propogation delay in seconds
-                t.timestamp[1] = t.timestamp[1] + Network.tx_prop_delay()
-                i.transactionsPool.append(t)
+                tx.timestamp[1] = tx.timestamp[1] + Network.tx_prop_delay()
+                node.transactionsPool.append(tx)
 
-    def execute_transactions(miner, currentTime):
+    def execute_transactions(miner, block):
+        block_security_level = block.security_level()
+
         transactions = []  # prepare a list of transactions to be included in the block
         size = 0  # calculate the total block gaslimit
-        count = 0
-        blocksize = p.Bsize
-        miner.transactionsPool.sort(
-            key=operator.attrgetter('fee'), reverse=True)
-        pool = miner.transactionsPool
 
-        while count < len(pool):
-            if (blocksize >= pool[count].size and pool[count].timestamp[1] <= currentTime):
-                blocksize -= pool[count].size
-                transactions += [pool[count]]
-                size += pool[count].size
-            count += 1
+        for idx, tx in enumerate(miner.transactionsPool):
+            # move out timeout tx from transactionsPool
+            if block.timestamp > tx.timestamp[0] + p.Ttimeout:
+                Statistics.tx_timeout_count[-tx.security_level] += 1
+                del miner.transactionsPool[idx]
+                continue
+
+            if p.Bsize - size >= tx.size and block.timestamp >= tx.timestamp[1] and block_security_level >= tx.security_level:
+                transactions.append(tx)
+                size += tx.size
 
         return transactions, size

@@ -32,13 +32,10 @@ class BlockCommit(BaseBlockCommit):
         Statistics.totalBlocks += 1  # count # of total blocks created!
         if p.hasTrans:
             if p.Ttechnique == "Light":
-                blockTrans, blockSize = LT.execute_transactions()
+                new_branch.transactions, new_branch.usedgas = LT.execute_transactions()
             elif p.Ttechnique == "Full":
-                blockTrans, blockSize = FT.execute_transactions(
-                    miner, event.time)
-
-            new_branch.transactions = blockTrans
-            new_branch.usedgas = blockSize
+                new_branch.transactions, new_branch.usedgas = FT.execute_transactions(miner, new_branch)
+                BlockCommit.update_transactionsPool(miner, new_branch)
 
         miner_virtual_block.set_branch(new_branch)
         BlockCommit.propagate_block(new_branch)
