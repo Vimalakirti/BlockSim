@@ -77,7 +77,7 @@ class InputsConfig:
     ''' Ethereum '''
     if model == 2:
         # The block gas limit
-        Blimit = int(os.getenv('BLOCK_GAS_LIMIT', 8000000))
+        Blimit = int(os.getenv('BLOCK_GAS_LIMIT', 10000000))
         # whether to enable uncle in the simulator
         hasUncles = bool(os.getenv('UNCLE_ENABLED', True))
         # max count of uncle blocks allowed per block
