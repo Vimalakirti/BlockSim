@@ -24,9 +24,9 @@ class InputsConfig:
 
     ''' Block Parameters '''
     # average time for creating a block in the blockchain
-    Binterval = float(os.getenv('BLOCK_INTERVAL', 600))
+    Binterval = float(os.getenv('BLOCK_INTERVAL', 596))
     # block size in MB
-    Bsize = float(os.getenv('BLOCK_SIZE', 1.0))
+    Bsize = float(os.getenv('BLOCK_SIZE', 0.83))
     # average block propogation delay in seconds, ref: https://bitslog.wordpress.com/2016/04/28/uncle-mining-an-ethereum-consensus-protocol-flaw
     Bdelay = float(os.getenv('BLOCK_PROPAGATION_DELAY', 0.42))
     # reward for mining a block
@@ -46,7 +46,7 @@ class InputsConfig:
     # average transaction fee
     Tfee = float(os.getenv('TRANSACTION_FEE', 0.000062))
     # time to treat transaction as timeout after it is created but still not mined
-    Ttimeout = float(os.getenv('TRANSACTION_TIMEOUT', 6000))
+    Ttimeout = float(os.getenv('TRANSACTION_TIMEOUT', 5960))
 
     ''' Node Parameters '''
     # total count of nodes in the network
@@ -77,7 +77,7 @@ class InputsConfig:
     ''' Ethereum '''
     if model == 2:
         # The block gas limit
-        Blimit = int(os.getenv('BLOCK_GAS_LIMIT', 10000000))
+        Blimit = int(os.getenv('BLOCK_GAS_LIMIT', 7997148))
         # whether to enable uncle in the simulator
         hasUncles = bool(os.getenv('UNCLE_ENABLED', True))
         # max count of uncle blocks allowed per block
@@ -94,10 +94,10 @@ class InputsConfig:
 
     ''' B++ '''
     if model == 3:
-        Bdmin = int(os.getenv('BLOCK_D_MIN', -3))
+        Bdmin = int(os.getenv('BLOCK_D_MIN', -2))
         if Ttechnique == 'Full':
             TProbability = [float(tx_probability)
-                            for tx_probability in os.getenv('TRANSACTION_PROBABILITY', '5,15,30,50').split(',')]
+                            for tx_probability in os.getenv('TRANSACTION_PROBABILITY', '1,25,74').split(',')]
             if len(TProbability) != 1-Bdmin:
                 sys.exit('length of transaction probability must be equal to block 1-d_min %d, but got %d' % (
                     1-Bdmin, len(TProbability)))
