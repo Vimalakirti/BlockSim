@@ -71,13 +71,14 @@ class BlockCommit(BaseBlockCommit):
                 BlockCommit.update_local_blockchain(node,miner,depth)
                 BlockCommit.generate_next_block(node,currentTime)# Start mining or working on the next block
 
+                if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node,event.block) # not sure yet.
+
             #### 2- if depth of the received block <= depth of the last block, then reject the block (add it to unclechain) ####
             else:
                  uncle=event.block
                  node.unclechain.append(uncle)
 
             if p.hasUncles: BlockCommit.update_unclechain(node)
-            if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node,event.block) # not sure yet.
 
     # Upon generating or receiving a block, the miner start working on the next block as in POW
     def generate_next_block(node,currentTime):
