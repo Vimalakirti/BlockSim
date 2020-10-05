@@ -7,3 +7,10 @@ function run_different_dmin {
         run
     done
 }
+
+# when dmin is set to zero, b++'s behavior will be exactly like bitcoin
+function run_as_bitcoin {
+    OUTPUT="${DIR_OUTPUT}/${MODEL_NAME}-as-bitcoin"
+    BLOCK_D_MIN="0"
+    run
+}
