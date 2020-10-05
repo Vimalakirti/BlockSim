@@ -55,8 +55,8 @@ class BlockCommit(BaseBlockCommit):
         if receiver_virtual_block.branches[new_branch.branch_id] == None:
             receiver_virtual_block.set_branch(new_branch)
 
-            #### the branch received is the one receiver try to mine ####
-            if receiver.mining_branch == None or (receiver.mining_branch.depth == new_branch.depth and receiver.mining_branch.branch_id == new_branch.branch_id):
+            #### the branch received is deeper than or the exact one that receiver is trying to mine ####
+            if receiver.mining_branch == None or (new_branch.depth > receiver.mining_branch.depth) or (receiver.mining_branch.depth == new_branch.depth and receiver.mining_branch.branch_id == new_branch.branch_id):
                 #### abort duplicate branch mining and begin to mine next branch ####
                 BlockCommit.generate_next_block(receiver, event.time)
 
