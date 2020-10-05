@@ -82,22 +82,18 @@ class LightTransaction():
 
     ##### Select and execute a number of transactions to be added in the next block #####
     def execute_transactions():
-        transactions= [] # prepare a list of transactions to be included in the block
-        limit = 0 # calculate the total block gaslimit
-        count=0
-        blocklimit = p.Bsize
-        pool= LightTransaction.pending_transactions
+        sorted_tx_pool = sorted(LightTransaction.pending_transactions,
+                      key=lambda x: x.gasPrice, reverse=True)
 
-        pool = sorted(pool, key=lambda x: x.gasPrice, reverse=True) # sort pending transactions in the pool based on the gasPrice value
+        transactions = []  # prepare a list of transactions to be included in the block
+        used_gas = 0  # calculate the total block gaslimit
 
-        while count < len(pool):
-                if  (blocklimit >= pool[count].gasLimit):
-                    blocklimit -= pool[count].usedGas
-                    transactions += [pool[count]]
-                    limit += pool[count].usedGas
-                count+=1
+        for tx in sorted_tx_pool:
+            if p.Blimit - used_gas >= tx.gasLimit:
+                transactions.append(tx)
+                used_gas += tx.usedGas
 
-        return transactions, limit
+        return transactions, used_gas
 
 class FullTransaction():
 
