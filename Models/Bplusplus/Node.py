@@ -40,13 +40,14 @@ class Node(BaseNode):
                 return block
 
     def grow_blockchain(self, depth):
-        if len(self.blockchain) - 1 < depth:
-            for i in range(depth + 1 - len(self.blockchain)):
-                depth = len(self.blockchain)+i
+        current_depth = len(self.blockchain) - 1
+        if current_depth < depth:
+            for i in range(depth - current_depth):
+                new_block_depth = current_depth + 1 + i
                 self.blockchain.append(
                     VirtualBlock(
-                        id=depth,
-                        depth=depth,
-                        previous=depth-1,
+                        id=new_block_depth,
+                        depth=new_block_depth,
+                        previous=new_block_depth-1,
                     )
                 )
