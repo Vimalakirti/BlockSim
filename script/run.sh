@@ -1,10 +1,13 @@
 #!/bin/sh
 
-set -a
+set -aeo pipefail
 
 # file path
 DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 DIR_OUTPUT="${DIR_ROOT}/output"
+
+# util script
+source "${DIR_ROOT}/script/util.sh"
 
 # script option
 MODEL_NAMES=(base bitcoin ethereum b++)
@@ -36,6 +39,15 @@ function run {
     python3 "${DIR_ROOT}/Main.py"
 }
 
+function run_different_node_count {
+    for NODE_COUNT in `seq 1 10`; do
+        NODE_COUNT="${NODE_COUNT}0"
+        NODE_HASH_POWER=$(join_by_comma $(for i in $(seq 1 "${NODE_COUNT}"); do echo 1; done))
+        OUTPUT="${DIR_OUTPUT}/${MODEL_NAME}-node-count-${NODE_COUNT}"
+        run
+    done
+}
+
 function main {
     # prepare model id
     MODEL_NAME=${1}
@@ -58,7 +70,7 @@ function main {
     # run
     local RUN=${2}
     if ! function_exists ${RUN}; then
-        FUNCTIONS=(`declare -F | awk '{print $3}' | grep --invert-match 'function_exists\|main\|model_id'`)
+        FUNCTIONS=(`declare -F | awk '{print $3}' | grep --invert-match 'function_exists\|main\|model_id\|join_by\|join_by_comma'`)
         printf 'please specify function in\n'
         printf '* %s\n' "${FUNCTIONS[@]}"
         exit 1
