@@ -17,10 +17,8 @@ class Transaction(object):
     :param int to: the id of the recipint node
     :param int value: the amount of cryptocurrencies to be sent to the recipint node
     :param int size: the transaction size in MB
-    :param int gasLimit: the maximum amount of gas units the transaction can use. It is specified by the submitter of the transaction
-    :param int usedGas: the amount of gas used by the transaction after its execution on the EVM
-    :param int gasPrice: the amount of cryptocurrencies (in Gwei) the submitter of the transaction is willing to pay per gas unit
-    :param float fee: the fee of the transaction (usedGas * gasPrice)
+    :param float fee: the fee of the transaction
+    :param int security_level: the security level of the transaction
     """
 
     def __init__(self,

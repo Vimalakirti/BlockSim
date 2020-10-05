@@ -32,9 +32,9 @@ class BlockCommit(BaseBlockCommit):
         Statistics.totalBlocks += 1  # count # of total blocks created!
         if p.hasTrans:
             if p.Ttechnique == "Light":
-                new_branch.transactions, new_branch.usedgas = LT.execute_transactions()
+                new_branch.transactions, new_branch.size = LT.execute_transactions()
             elif p.Ttechnique == "Full":
-                new_branch.transactions, new_branch.usedgas = FT.execute_transactions(miner, new_branch)
+                new_branch.transactions, new_branch.size = FT.execute_transactions(miner, new_branch)
                 BlockCommit.update_transactionsPool(miner, new_branch)
 
         miner_virtual_block.set_branch(new_branch)
@@ -56,7 +56,7 @@ class BlockCommit(BaseBlockCommit):
             receiver_virtual_block.set_branch(new_branch)
 
             #### the branch received is the one receiver try to mine ####
-            if receiver.mining_branch.depth == new_branch.depth and receiver.mining_branch.branch_id == new_branch.branch_id:
+            if receiver.mining_branch == None or (receiver.mining_branch.depth == new_branch.depth and receiver.mining_branch.branch_id == new_branch.branch_id):
                 #### abort duplicate branch mining and begin to mine next branch ####
                 BlockCommit.generate_next_block(receiver, event.time)
 
