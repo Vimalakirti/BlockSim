@@ -95,12 +95,8 @@ class InputsConfig:
     ''' B++ '''
     if model == 3:
         Bdmin = int(os.getenv('BLOCK_D_MIN', -2))
-        if Ttechnique == 'Full':
-            TProbability = [float(tx_probability)
-                            for tx_probability in os.getenv('TRANSACTION_PROBABILITY', '1,25,74').split(',')]
-            if len(TProbability) != 1-Bdmin:
-                sys.exit('length of transaction probability must be equal to block 1-d_min %d, but got %d' % (
-                    1-Bdmin, len(TProbability)))
+        TProbability = [float(tx_probability)
+                        for tx_probability in os.getenv('TRANSACTION_PROBABILITY', '1,25,74').split(',')]
 
         NODES = [Node(id=id, hashPower=hash_power)
                  for id, hash_power in enumerate(node_hash_powers)]
