@@ -39,6 +39,12 @@ function run {
     python3 "${DIR_ROOT}/Main.py"
 }
 
+function run_full_tx {
+    TRANSACTION_TECHNIQUE="Full"
+    OUTPUT="${DIR_OUTPUT}/${MODEL_NAME}-full-tx"
+    run
+}
+
 function run_different_node_count {
     for NODE_COUNT in `seq 1 10`; do
         NODE_COUNT="${NODE_COUNT}0"
