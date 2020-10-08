@@ -18,7 +18,7 @@ class Statistics:
     blockData = []
     tx_timeout_count = 0
     if p.model == 3:
-        tx_timeout_count = [0] * (1-p.Bdmin)
+        tx_timeout_count = [0] * len(p.TProbability)
     blocksResults = []
     tx_latency_mean_results = []
     tx_timeout_count_results = []
@@ -70,7 +70,9 @@ class Statistics:
 
     def transaction_latency_result():
         if p.model == 3:
-            tx_latencies = [[] for _ in range(1-p.Bdmin)]
+            from Models.Bplusplus.Transaction import FullTransaction
+
+            tx_latencies = [[] for _ in range(len(p.TProbability))]
 
             # calculate global chain tx latency of each dmin
             for block in c.global_chain:
@@ -80,34 +82,47 @@ class Statistics:
                         tx_latencies[idx].append(
                             branch.timestamp - tx.timestamp[0])
 
-            last_block_timestamp = max([branch.timestamp for branch in c.global_chain[-1].branches])
-            # calculate tx not mined timout count of each dmin
-            for node in p.NODES:
-                for tx in node.transactionsPool:
-                    if last_block_timestamp > tx.timestamp[0] + p.Ttimeout:
-                        Statistics.tx_timeout_count[-tx.security_level] += 1
+                        if tx.id in FullTransaction.tx_set:
+                            del FullTransaction.tx_set[tx.id]
+
+            # calculate tx timout count of each dmin
+            last_block_timestamp = max(
+                [branch.timestamp for branch in c.global_chain[-1].branches])
+            for id in FullTransaction.tx_set:
+                if FullTransaction.tx_set[id].timestamp[0] + p.Ttimeout < last_block_timestamp:
+                    continue
+                Statistics.tx_timeout_count[-FullTransaction.tx_set[id].security_level] += 1
 
             Statistics.tx_latency_mean_results.append(
                 [np.mean(l) for l in tx_latencies])
             Statistics.tx_timeout_count_results.append(
                 Statistics.tx_timeout_count)
         else:
-            tx_latencies = []
+            if p.model == 2:
+                from Models.Ethereum.Transaction import FullTransaction
+            else:
+                from Models.Transaction import FullTransaction
 
             # calculate global chain tx latency
+            tx_latencies = []
             for block in c.global_chain:
                 for tx in block.transactions:
                     tx_latencies.append(block.timestamp - tx.timestamp[0])
-                    
+
+                    if tx.id in FullTransaction.tx_set:
+                        del FullTransaction.tx_set[tx.id]
+
+            # calculate tx timout count
             last_block_timestamp = c.global_chain[-1].timestamp
-            for node in p.NODES:
-                for tx in node.transactionsPool:
-                    if last_block_timestamp > tx.timestamp[0] + p.Ttimeout:
-                        Statistics.tx_timeout_count += 1
+            for id in FullTransaction.tx_set:
+                if FullTransaction.tx_set[id].timestamp[0] + p.Ttimeout < last_block_timestamp:
+                    continue
+                Statistics.tx_timeout_count += 1
 
             Statistics.tx_latency_mean_results.append(np.mean(tx_latencies))
             Statistics.tx_timeout_count_results.append(
                 Statistics.tx_timeout_count)
+
     ########################################################### Calculate and distibute rewards among the miners ###########################################################################################
     def profit_results():
 
@@ -184,7 +199,7 @@ class Statistics:
             df6 = pd.DataFrame(Statistics.tx_timeout_count_results)
             if p.model == 3:
                 df5.columns = df6.columns = [
-                    '%d' % -i for i in range(1-p.Bdmin)]
+                    '%d' % -i for i in range(len(p.TProbability))]
             else:
                 df5.columns = df6.columns = ['0']
 
@@ -205,7 +220,7 @@ class Statistics:
         Statistics.blockData = []
         Statistics.tx_timeout_count = 0
         if p.model == 3:
-            Statistics.tx_timeout_count = [0] * (1-p.Bdmin)
+            Statistics.tx_timeout_count = [0] * len(p.TProbability)
 
     def reset2():
         Statistics.blocksResults = []

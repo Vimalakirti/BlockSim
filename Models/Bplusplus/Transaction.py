@@ -2,6 +2,7 @@ import random
 import itertools
 import numpy as np
 import operator
+from heapq import merge
 from InputsConfig import InputsConfig as p
 from Statistics import Statistics
 from Models.Network import Network
@@ -40,6 +41,8 @@ class Transaction(object):
         self.fee = fee
         self.security_level = security_level
 
+    def __lt__(self, other):
+        return self.fee < other.fee
 
 class LightTransaction():
 
@@ -68,41 +71,42 @@ class LightTransaction():
     ##### Select and execute a number of transactions to be added in the next block #####
 
     def execute_transactions():
-        transactions = []  # prepare a list of transactions to be included in the block
-        size = 0  # calculate the total block gaslimit
-        count = 0
-        blocksize = p.Bsize
-        pool = LightTransaction.pending_transactions
+        sorted_tx_pool = sorted(LightTransaction.pending_transactions,
+                                key=lambda x: x.fee, reverse=True)
 
-        # sort pending transactions in the pool based on the gasPrice value
-        pool = sorted(pool, key=lambda x: x.fee, reverse=True)
+        transactions = []
+        size = 0
 
-        while count < len(pool):
-            if (blocksize >= pool[count].size):
-                blocksize -= pool[count].size
-                transactions += [pool[count]]
-                size += pool[count].size
-            count += 1
+        for tx in sorted_tx_pool:
+            if p.Bsize - size >= tx.size:
+                transactions.append(tx)
+                size += tx.size
 
         return transactions, size
 
 
 class FullTransaction():
+    tx_set = {}
 
     def create_transactions():
+        FullTransaction.tx_set = {}
         total_tx_count = int(p.Tn * p.simTime)
         security_level_rand_pool = list(itertools.chain(*[
             [-security_level for _ in range(int(float(weight)*100))] for security_level, weight in enumerate(p.TProbability)
         ]))
 
-        for i in range(total_tx_count):
+        while len(FullTransaction.tx_set) < total_tx_count:
+            id = random.randrange(100000000000000)
+            if id in FullTransaction.tx_set:
+                continue
+
             sender = random.choice(p.NODES)
             creation_time = receive_time = random.randint(0, p.simTime-1)
             security_level = random.choice(security_level_rand_pool)
             fee = random.expovariate(1/(p.Tfee * (2**security_level)))
 
             tx = Transaction(
-                id=random.randrange(100000000000),
+                id=id,
                 timestamp=[creation_time, receive_time],
                 sender=sender.id,
                 to=random.choice(p.NODES).id,
@@ -111,13 +115,14 @@ class FullTransaction():
                 fee=fee,
             )
 
-            sender.transactionsPool.append(tx)
+            sender.all_transactions.append(tx)
             FullTransaction.transaction_prop(tx)
+
+            FullTransaction.tx_set[tx.id] = tx
 
         # sort transactions by fee asc
         for node in p.NODES:
-            node.transactionsPool.sort(
-                key=operator.attrgetter('fee'), reverse=True)
+            node.all_transactions.sort(key=lambda tx: tx.timestamp[1])
 
     # Transaction propogation & preparing pending lists for miners
     def transaction_prop(tx):
@@ -126,22 +131,30 @@ class FullTransaction():
             if tx.sender != node.id:
                 # transaction propogation delay in seconds
                 tx.timestamp[1] = tx.timestamp[1] + Network.tx_prop_delay()
-                node.transactionsPool.append(tx)
+                node.all_transactions.append(tx)
+
+    def update_tx_pool(miner, block):
+        valid_tx_idx = 0
+        for idx, tx in enumerate(miner.all_transactions):
+            if tx.timestamp[1] > block.timestamp:
+                valid_tx_idx = idx
+                break
+
+        new_txs = sorted(miner.all_transactions[:valid_tx_idx], reverse=True)
+        del miner.all_transactions[:valid_tx_idx]
+
+        block_security_level = block.security_level()
+        miner.transactionsPool = [tx for tx in list(merge(
+            miner.transactionsPool, new_txs, reverse=True)) if tx.id not in miner.mined_tx_set and block.timestamp < tx.timestamp[0] + p.Ttimeout and block_security_level >= tx.security_level]
 
     def execute_transactions(miner, block):
-        block_security_level = block.security_level()
+        FullTransaction.update_tx_pool(miner, block)
 
-        transactions = []  # prepare a list of transactions to be included in the block
-        size = 0  # calculate the total block gaslimit
+        transactions = []
+        size = 0
 
-        for idx, tx in enumerate(miner.transactionsPool):
-            # move out timeout tx from transactionsPool
-            if block.timestamp > tx.timestamp[0] + p.Ttimeout:
-                Statistics.tx_timeout_count[-tx.security_level] += 1
-                del miner.transactionsPool[idx]
-                continue
-
-            if p.Bsize - size >= tx.size and block.timestamp >= tx.timestamp[1] and block_security_level >= tx.security_level:
+        for tx in miner.transactionsPool:
+            if p.Bsize - size >= tx.size:
                 transactions.append(tx)
                 size += tx.size
 

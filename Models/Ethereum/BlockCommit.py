@@ -31,7 +31,7 @@ class BlockCommit(BaseBlockCommit):
                 elif p.Ttechnique == "Full":
                     event.block.transactions, event.block.usedgas = FT.execute_transactions(
                         miner, eventTime)
-                    BlockCommit.update_transactionsPool(miner, event.block)
+                    BlockCommit.set_mined_txs(miner, event.block.transactions)
 
             if p.hasUncles:
                 BlockCommit.update_unclechain(miner)
@@ -60,7 +60,7 @@ class BlockCommit(BaseBlockCommit):
         if blockPrev == lastBlockId:
             node.blockchain.append(event.block) # append the block to local blockchain
 
-            if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node, event.block)
+            if p.hasTrans and p.Ttechnique == "Full": BlockCommit.set_mined_txs(node, event.block.transactions)
 
             BlockCommit.generate_next_block(node,currentTime)# Start mining or working on the next block
 
@@ -70,8 +70,6 @@ class BlockCommit(BaseBlockCommit):
             if (depth > len(node.blockchain)):
                 BlockCommit.update_local_blockchain(node,miner,depth)
                 BlockCommit.generate_next_block(node,currentTime)# Start mining or working on the next block
-
-                if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node,event.block) # not sure yet.
 
             #### 2- if depth of the received block <= depth of the last block, then reject the block (add it to unclechain) ####
             else:
@@ -107,12 +105,15 @@ class BlockCommit(BaseBlockCommit):
                 if (node.blockchain[i].id != miner.blockchain[i].id): # and (self.node.blockchain[i-1].id == Miner.blockchain[i].previous) and (i>=1):
                     node.unclechain.append(node.blockchain[i]) # move block to unclechain
                     newBlock = miner.blockchain[i]
-                    node.blockchain[i]= newBlock
-                    if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node,newBlock)
+                    if p.hasTrans and p.Ttechnique == "Full":
+                        BlockCommit.unset_mined_txs(
+                            node, node.blockchain[i].transactions)
+                        BlockCommit.set_mined_txs(node, newBlock.transactions)
+                    node.blockchain[i] = newBlock
             else:
                 newBlock = miner.blockchain[i]
                 node.blockchain.append(newBlock)
-                if p.hasTrans and p.Ttechnique == "Full": BlockCommit.update_transactionsPool(node,newBlock)
+                if p.hasTrans and p.Ttechnique == "Full": BlockCommit.set_mined_txs(node,newBlock.transactions)
             i+=1
 
     # Upon receiving a block, update local unclechain to remove all uncles included in the received block

@@ -26,8 +26,11 @@ class Node(BaseNode):
         for node in p.NODES:
             node.blockchain = []
             node.transactionsPool = []
+            node.all_transactions = []
+            node.mined_tx_set = set()
             node.blocks = 0
             node.balance = 0
+            node.mining_branch = None
 
     def next_unfinished_virtual_block(self):
         next_unfinished_virtual_block_depth = self.last_finished_virtual_block().depth + 1
