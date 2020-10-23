@@ -26,8 +26,11 @@ class Node(BaseNode):
         for node in p.NODES:
             node.blockchain = []
             node.transactionsPool = []
+            node.all_transactions = []
+            node.mined_tx_set = set()
             node.blocks = 0
             node.balance = 0
+            node.mining_branch = None
 
     def next_unfinished_virtual_block(self):
         next_unfinished_virtual_block_depth = self.last_finished_virtual_block().depth + 1
@@ -40,13 +43,14 @@ class Node(BaseNode):
                 return block
 
     def grow_blockchain(self, depth):
-        if len(self.blockchain) - 1 < depth:
-            for i in range(depth + 1 - len(self.blockchain)):
-                depth = len(self.blockchain)+i
+        current_depth = len(self.blockchain) - 1
+        if current_depth < depth:
+            for i in range(depth - current_depth):
+                new_block_depth = current_depth + 1 + i
                 self.blockchain.append(
                     VirtualBlock(
-                        id=depth,
-                        depth=depth,
-                        previous=depth-1,
+                        id=new_block_depth,
+                        depth=new_block_depth,
+                        previous=new_block_depth-1,
                     )
                 )

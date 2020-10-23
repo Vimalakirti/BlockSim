@@ -46,8 +46,10 @@ class Node(BaseNode):
     def resetState():
         from InputsConfig import InputsConfig as p
         for node in p.NODES:
-            node.blockchain= [] # create an array for each miner to store chain state locally
-            node.transactionsPool= []
+            node.blockchain = []  # create an array for each miner to store chain state locally
+            node.transactionsPool = []
+            node.all_transactions = []
+            node.mined_tx_set = set()
             node.unclechain = []
             node.blocks=0 # total number of blocks mined in the main chain
             node.uncles=0 # total number of uncle blocks included in the main chain

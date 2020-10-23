@@ -32,10 +32,10 @@ class BlockCommit(BaseBlockCommit):
         Statistics.totalBlocks += 1  # count # of total blocks created!
         if p.hasTrans:
             if p.Ttechnique == "Light":
-                new_branch.transactions, new_branch.usedgas = LT.execute_transactions()
+                new_branch.transactions, new_branch.size = LT.execute_transactions()
             elif p.Ttechnique == "Full":
-                new_branch.transactions, new_branch.usedgas = FT.execute_transactions(miner, new_branch)
-                BlockCommit.update_transactionsPool(miner, new_branch)
+                new_branch.transactions, new_branch.size = FT.execute_transactions(miner, new_branch)
+                BlockCommit.set_mined_txs(miner, new_branch.transactions)
 
         miner_virtual_block.set_branch(new_branch)
         BlockCommit.propagate_block(new_branch)
@@ -55,13 +55,13 @@ class BlockCommit(BaseBlockCommit):
         if receiver_virtual_block.branches[new_branch.branch_id] == None:
             receiver_virtual_block.set_branch(new_branch)
 
-            #### the branch received is the one receiver try to mine ####
-            if receiver.mining_branch.depth == new_branch.depth and receiver.mining_branch.branch_id == new_branch.branch_id:
+            #### the branch received is deeper than or the exact one that receiver is trying to mine ####
+            if p.hasTrans and p.Ttechnique == "Full":
+                BlockCommit.set_mined_txs(receiver, new_branch.transactions)
+
+            if receiver.mining_branch == None or (new_branch.depth > receiver.mining_branch.depth) or (receiver.mining_branch.depth == new_branch.depth and receiver.mining_branch.branch_id == new_branch.branch_id):
                 #### abort duplicate branch mining and begin to mine next branch ####
                 BlockCommit.generate_next_block(receiver, event.time)
-
-            if p.hasTrans and p.Ttechnique == "Full":
-                BlockCommit.update_transactionsPool(receiver, new_branch)
 
     # Upon generating or receiving a block, the miner start working on the next block as in POW
     def generate_next_block(node, currentTime):
