@@ -4,6 +4,9 @@
 The simulator of **B++** is implemented in this repository. This simulation is based on **BlockSim**.
 (B++ is still under review currently.)
 
+## What is B++?
+B++ is a scalable blockchain based on Proof-of-Work algorithm. The key idea of B++ is that loosening the restrictions in blockchain security to improve the blockchain throughput.
+
 ## What is BlockSim Simulator?
 **BlockSim** is an open source blockchain simulator, capturing network, consensus and incentives layers of blockchain systems. For more details about BlockSim, we refer to our journal paper that can be freely accessed online https://www.frontiersin.org/articles/10.3389/fbloc.2020.00028/full
 
@@ -32,7 +35,7 @@ Or you may use our scripts (which are located in `./script`) to run experiments,
     > bash script/run.sh b++ run_different_dmin
     2. The minimal security level is zero:
     > bash script/run.sh b++ run_as_bitcoin
-    3. Try different miner number:
+    3. Try different number of total miners:
     > bash script/run.sh b++ run_different_node_count
 
 ## Statistics and Results
